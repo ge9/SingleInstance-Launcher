@@ -75,7 +75,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             if (wnd) {
                 LPCTSTR lpszString = szArgList[1];
                 COPYDATASTRUCT cds;
-                cds.dwData = 1; // can be anything
+                cds.dwData = timeout; // can be anything
                 cds.cbData = sizeof(TCHAR) * (_tcslen(lpszString) + 1);
                 cds.lpData = (void*)lpszString;
                 SendMessage(wnd, WM_COPYDATA, (WPARAM)wnd, (LPARAM)(LPVOID)&cds);
@@ -91,7 +91,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
         return 0;
     }
        
-    if (szArgList  ) {
+    if ( szArgList ) {
         if (argCount > 3) {
             files.push_back(szArgList[1]);
         } else {
@@ -213,7 +213,7 @@ void LaunchApp() {
             i++; // skip
         }
         else {
-            ArgvQuote(szArgList[i], cmdLine, true);
+            ArgvQuote(szArgList[i], cmdLine, false);
         }
     }
     //MessageBox(0, cmdLine.c_str(), szArgList[2], 0);
@@ -223,6 +223,8 @@ void LaunchApp() {
         wsprintf(buffer, _T("ShellExecute failed. Error code=%d"), reinterpret_cast<int>(hinst));
     }
 }
+
+DWORD tmStart;
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -234,13 +236,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
+        tmStart = GetTickCount();
         SetTimer(hWnd, TIMER_ID, timeout, 0);
         break;
     case WM_COPYDATA:
         pcds = reinterpret_cast<COPYDATASTRUCT*>(lParam);
-        if (pcds->dwData == 1) {  
+        if (pcds->cbData) {  
             LPCTSTR lpszString = reinterpret_cast<LPCTSTR>(pcds->lpData);
             files.push_back(lpszString);
+            auto tm = pcds->dwData;
+            DWORD now = GetTickCount();
+            //int tmOut = timeout - (now-tmStart) + tm;
+            int tmOut = tm;
+            if(tmOut>0) {
+                tmStart = now;
+                timeout = tmOut;
+                KillTimer(hWnd, TIMER_ID);
+                SetTimer(hWnd, TIMER_ID, timeout, 0);
+            }
         }
         break;
     case WM_TIMER:
