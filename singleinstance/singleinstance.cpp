@@ -70,7 +70,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
     if (singleInstance.IsAnotherInstanceRunning()) {
         for (;;) {
-            DWORD startTime = GetTickCount();
+            DWORD startTime = GetTickCount64();
             HWND wnd = FindWindow(szWindowClass, NULL);
             if (wnd) {
                 LPCTSTR lpszString = szArgList[1];
@@ -82,7 +82,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 break;
             } else {
                 Sleep(50);
-                if (GetTickCount() - startTime > timeout ) {
+                if (GetTickCount64() - startTime > timeout ) {
                     break; // failure
                 }
             }
@@ -236,7 +236,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
-        tmStart = GetTickCount();
+        tmStart = GetTickCount64();
         SetTimer(hWnd, TIMER_ID, timeout, 0);
         break;
     case WM_COPYDATA:
@@ -245,7 +245,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             LPCTSTR lpszString = reinterpret_cast<LPCTSTR>(pcds->lpData);
             files.push_back(lpszString);
             auto tm = pcds->dwData;
-            DWORD now = GetTickCount();
+            DWORD now = GetTickCount64();
             //int tmOut = timeout - (now-tmStart) + tm;
             int tmOut = tm;
             if(tmOut>0) {
